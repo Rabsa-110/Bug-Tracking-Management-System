@@ -1,0 +1,246 @@
+{% extends 'base.html' %}
+{% block title %}#{{ issue.issue_id }} {{ issue.title }}{% endblock %}
+{% block page_title %}#{{ issue.issue_id }} — {{ issue.title|truncate(50) }}{% endblock %}
+{% block breadcrumb %}
+  <li><a href="{{ url_for('issues') }}">Issues</a></li>
+  <li><a href="{{ url_for('project_detail', pid=issue.project_id) }}">{{ issue.project_name }}</a></li>
+  <li>#{{ issue.issue_id }}</li>
+{% endblock %}
+{% block topbar_actions %}
+  {% if session.role in ('admin','manager') %}
+  <form method="POST" action="{{ url_for('delete_issue', iid=issue.issue_id) }}"
+        onsubmit="return confirm('Permanently delete this issue?')">
+    <button type="submit" class="btn btn-sm" style="background:rgba(245,54,92,.15);color:#f5365c;border:1px solid rgba(245,54,92,.3)">
+      <i class="bi bi-trash me-1"></i>Delete
+    </button>
+  </form>
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="row g-3">
+
+  <!-- LEFT: Main issue info -->
+  <div class="col-lg-8">
+
+    <!-- Issue Header Card -->
+    <div class="card mb-3">
+      <div class="card-body">
+        <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
+          <span class="badge badge-prio-{{ issue.priority }}" style="font-size:12px">{{ issue.priority }}</span>
+          <span class="badge badge-status-{{ issue.status }}" style="font-size:12px">{{ issue.status.replace('_',' ') }}</span>
+          <span style="font-size:12px;color:var(--muted)">
+            <i class="bi bi-folder2-open"></i>
+            <a href="{{ url_for('project_detail', pid=issue.project_id) }}" style="color:var(--muted);text-decoration:none">{{ issue.project_name }}</a>
+          </span>
+          <span style="font-size:12px;color:var(--muted);margin-left:auto">
+            <i class="bi bi-clock"></i> {{ issue.created_at.strftime('%B %d, %Y at %H:%M') }}
+          </span>
+        </div>
+        <h3 style="font-size:20px;font-weight:700;margin-bottom:8px">{{ issue.title }}</h3>
+        {% if issue.description %}
+        <p style="color:var(--muted);font-size:14px;line-height:1.7;margin:0">{{ issue.description }}</p>
+        {% else %}
+        <p style="color:var(--border);font-size:13px;font-style:italic;margin:0">No description provided.</p>
+        {% endif %}
+        <div style="display:flex;gap:16px;margin-top:14px;padding-top:14px;border-top:1px solid var(--border);font-size:12.5px;color:var(--muted)">
+          <span><i class="bi bi-person-fill me-1"></i>Reported by <strong style="color:var(--text)">{{ issue.reporter }}</strong></span>
+          <span><i class="bi bi-person-check-fill me-1"></i>Assigned to <strong style="color:var(--text)">{{ issue.assignee or 'Nobody' }}</strong></span>
+          {% if issue.updated_at != issue.created_at %}
+          <span class="ms-auto"><i class="bi bi-pencil-square me-1"></i>Updated {{ issue.updated_at.strftime('%b %d') }}</span>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Comments Section -->
+    <div class="card mb-3" id="comments">
+      <div class="card-header">
+        <i class="bi bi-chat-left-text-fill" style="color:var(--accent)"></i>
+        Comments
+        <span style="margin-left:6px;font-size:11px;padding:2px 8px;border-radius:10px;background:rgba(79,142,247,.15);color:var(--accent)">{{ comments|length }}</span>
+      </div>
+      <div class="card-body">
+        {% if comments %}
+          {% for c in comments %}
+          <div class="comment-item">
+            <div class="comment-avatar">{{ c.name[:2].upper() }}</div>
+            <div class="comment-body">
+              <div class="comment-meta">
+                <strong>{{ c.name }}</strong>
+                <span class="role-badge role-{{ c.role }}" style="margin-left:6px">{{ c.role }}</span>
+                <span style="margin-left:8px">{{ c.timestamp.strftime('%b %d, %Y at %H:%M') }}</span>
+              </div>
+              <div class="comment-text">{{ c.comment_text }}</div>
+            </div>
+          </div>
+          {% endfor %}
+        {% else %}
+          <div style="text-align:center;padding:24px;color:var(--muted)">
+            <i class="bi bi-chat-left" style="font-size:28px;opacity:.3;display:block;margin-bottom:8px"></i>
+            No comments yet. Be the first to comment!
+          </div>
+        {% endif %}
+
+        <!-- Add comment form -->
+        <form method="POST" action="{{ url_for('add_comment', iid=issue.issue_id) }}" style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border)">
+          <div class="d-flex gap-10 align-items-start gap-2">
+            <div class="comment-avatar flex-shrink-0">{{ session.name[:2].upper() }}</div>
+            <div style="flex:1">
+              <textarea name="comment_text" class="form-control" rows="3"
+                        placeholder="Write a comment…"></textarea>
+              <button type="submit" class="btn btn-primary btn-sm mt-2">
+                <i class="bi bi-send-fill me-1"></i>Post Comment
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Attachments Section -->
+    <div class="card" id="attachments">
+      <div class="card-header">
+        <i class="bi bi-paperclip" style="color:var(--warning)"></i>
+        Attachments
+        <span style="margin-left:6px;font-size:11px;padding:2px 8px;border-radius:10px;background:rgba(245,166,35,.15);color:#f5a623">{{ attachments|length }}</span>
+      </div>
+      <div class="card-body">
+        {% if attachments %}
+        <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px">
+          {% for a in attachments %}
+          {% set ext = a.file_name.rsplit('.',1)[-1].lower() if '.' in a.file_name else '' %}
+          <div style="display:flex;align-items:center;gap:12px;padding:10px 14px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:10px">
+            <span style="font-size:20px">
+              {% if ext in ['png','jpg','jpeg','gif','webp'] %}🖼️
+              {% elif ext == 'pdf' %}📄
+              {% elif ext in ['doc','docx'] %}📝
+              {% elif ext in ['xls','xlsx'] %}📊
+              {% elif ext == 'zip' %}🗜️
+              {% elif ext == 'log' %}📋
+              {% else %}📎{% endif %}
+            </span>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ a.file_name }}</div>
+              <div style="font-size:11px;color:var(--muted)">
+                Uploaded by {{ a.uploader }} · {{ a.uploaded_at.strftime('%b %d, %Y at %H:%M') }}
+              </div>
+            </div>
+            <a href="{{ url_for('download_file', filename=a.file_path) }}"
+               class="btn btn-sm btn-outline-secondary">
+              <i class="bi bi-download"></i>
+            </a>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div style="text-align:center;padding:20px;color:var(--muted);font-size:13px;margin-bottom:12px">
+          <i class="bi bi-paperclip" style="font-size:24px;opacity:.3;display:block;margin-bottom:8px"></i>
+          No attachments yet.
+        </div>
+        {% endif %}
+
+        <!-- Upload form -->
+        <form method="POST" action="{{ url_for('upload_attachment', iid=issue.issue_id) }}"
+              enctype="multipart/form-data"
+              style="padding-top:12px;border-top:1px solid var(--border)">
+          <label class="form-label">Attach a File</label>
+          <div class="d-flex gap-2">
+            <input type="file" name="file" class="form-control" style="flex:1"/>
+            <button type="submit" class="btn btn-warning btn-sm" style="white-space:nowrap">
+              <i class="bi bi-upload me-1"></i>Upload
+            </button>
+          </div>
+          <div style="font-size:11px;color:var(--muted);margin-top:6px">
+            Allowed: txt, pdf, png, jpg, gif, doc, docx, xlsx, zip, log — Max 16 MB
+          </div>
+        </form>
+      </div>
+    </div>
+
+  </div><!-- end col-lg-8 -->
+
+  <!-- RIGHT: Sidebar panels -->
+  <div class="col-lg-4">
+
+    <!-- Update Status -->
+    <div class="card mb-3">
+      <div class="card-header"><i class="bi bi-arrow-repeat" style="color:var(--success)"></i> Update Status</div>
+      <div class="card-body">
+        <form method="POST" action="{{ url_for('update_status', iid=issue.issue_id) }}">
+          <div class="mb-2">
+            <select name="status" class="form-select">
+              {% for s in ['open','in_progress','resolved','closed'] %}
+              <option value="{{ s }}" {% if issue.status == s %}selected{% endif %}>
+                {{ s.replace('_',' ').title() }}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+          <button type="submit" class="btn btn-success btn-sm w-100">
+            <i class="bi bi-check-lg me-1"></i>Update Status
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Assign Issue -->
+    <div class="card mb-3">
+      <div class="card-header"><i class="bi bi-person-check-fill" style="color:var(--accent)"></i> Assignment</div>
+      <div class="card-body">
+        <form method="POST" action="{{ url_for('assign_issue', iid=issue.issue_id) }}">
+          <div class="mb-2">
+            <select name="assigned_to" class="form-select">
+              <option value="">— Unassigned —</option>
+              {% for u in users %}
+              <option value="{{ u.user_id }}" {% if issue.assignee_id == u.user_id %}selected{% endif %}>
+                {{ u.name }} ({{ u.role }})
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+          <button type="submit" class="btn btn-primary btn-sm w-100">
+            <i class="bi bi-person-plus me-1"></i>Assign
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Status History -->
+    <div class="card">
+      <div class="card-header"><i class="bi bi-clock-history" style="color:var(--info)"></i> Status History</div>
+      <div class="card-body">
+        {% if history %}
+        <div class="timeline">
+          {% for h in history %}
+          <div class="timeline-item">
+            <div class="timeline-dot" style="background:
+              {% if h.new_status == 'open' %}var(--danger)
+              {% elif h.new_status == 'in_progress' %}var(--warning)
+              {% elif h.new_status == 'resolved' %}var(--success)
+              {% else %}var(--muted){% endif %}
+            "></div>
+            <div class="timeline-content">
+              <strong style="font-size:12px">{{ h.changer }}</strong>
+              <br>
+              {% if h.old_status %}
+              <span class="badge badge-status-{{ h.old_status }}" style="font-size:10px">{{ h.old_status.replace('_',' ') }}</span>
+              <span style="font-size:11px;color:var(--muted)"> → </span>
+              {% else %}<span style="font-size:11px;color:var(--muted)">Created as </span>{% endif %}
+              <span class="badge badge-status-{{ h.new_status }}" style="font-size:10px">{{ h.new_status.replace('_',' ') }}</span>
+            </div>
+            <div class="timeline-time">{{ h.changed_at.strftime('%b %d, %Y %H:%M') }}</div>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div style="text-align:center;color:var(--muted);font-size:13px;padding:16px">
+          No history recorded yet.
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+  </div><!-- end col-lg-4 -->
+</div>
+{% endblock %}

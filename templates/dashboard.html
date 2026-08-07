@@ -1,0 +1,310 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+{% block breadcrumb %}<li>Dashboard</li>{% endblock %}
+{% block topbar_actions %}
+  <a href="{{ url_for('new_issue') }}" class="btn btn-primary btn-sm">
+    <i class="bi bi-plus-lg me-1"></i>Report Bug
+  </a>
+{% endblock %}
+
+{% block head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+{% endblock %}
+
+{% block content %}
+
+<!-- ══ 6 PORTAL STAT CARDS (all clickable) ══ -->
+<div class="row g-3 mb-4">
+  {# Each stat card is a proper <a> tag so clicking navigates to the right filtered view #}
+  <div class="col-6 col-xl-2">
+    <a href="{{ url_for('issues') }}" class="stat-card d-flex" style="text-decoration:none">
+      <div class="stat-icon" style="background:rgba(79,142,247,.12);color:#4f8ef7">
+        <i class="bi bi-bug-fill"></i>
+      </div>
+      <div>
+        <div class="stat-val" style="color:#4f8ef7">{{ stats.total }}</div>
+        <div class="stat-lbl">Total Issues</div>
+      </div>
+    </a>
+  </div>
+  <div class="col-6 col-xl-2">
+    <a href="{{ url_for('issues', status='open') }}" class="stat-card d-flex" style="text-decoration:none">
+      <div class="stat-icon" style="background:rgba(245,54,92,.12);color:#ff6b8a">
+        <i class="bi bi-exclamation-circle-fill"></i>
+      </div>
+      <div>
+        <div class="stat-val" style="color:#ff6b8a">{{ stats.open }}</div>
+        <div class="stat-lbl">Open</div>
+      </div>
+    </a>
+  </div>
+  <div class="col-6 col-xl-2">
+    <a href="{{ url_for('issues', status='in_progress') }}" class="stat-card d-flex" style="text-decoration:none">
+      <div class="stat-icon" style="background:rgba(245,166,35,.12);color:#f5a623">
+        <i class="bi bi-arrow-repeat"></i>
+      </div>
+      <div>
+        <div class="stat-val" style="color:#f5a623">{{ stats.in_progress }}</div>
+        <div class="stat-lbl">In Progress</div>
+      </div>
+    </a>
+  </div>
+  <div class="col-6 col-xl-2">
+    <a href="{{ url_for('issues', status='resolved') }}" class="stat-card d-flex" style="text-decoration:none">
+      <div class="stat-icon" style="background:rgba(45,206,137,.12);color:#2dce89">
+        <i class="bi bi-check-circle-fill"></i>
+      </div>
+      <div>
+        <div class="stat-val" style="color:#2dce89">{{ stats.resolved }}</div>
+        <div class="stat-lbl">Resolved</div>
+      </div>
+    </a>
+  </div>
+  <div class="col-6 col-xl-2">
+    <a href="{{ url_for('projects') }}" class="stat-card d-flex" style="text-decoration:none">
+      <div class="stat-icon" style="background:rgba(124,92,252,.12);color:#a88cfc">
+        <i class="bi bi-folder2-open"></i>
+      </div>
+      <div>
+        <div class="stat-val" style="color:#a88cfc">{{ stats.projects }}</div>
+        <div class="stat-lbl">Projects</div>
+      </div>
+    </a>
+  </div>
+  <div class="col-6 col-xl-2">
+    <a href="{{ url_for('users') if session.role in ('admin','manager') else url_for('profile') }}"
+       class="stat-card d-flex" style="text-decoration:none">
+      <div class="stat-icon" style="background:rgba(17,205,239,.12);color:#11cdef">
+        <i class="bi bi-people-fill"></i>
+      </div>
+      <div>
+        <div class="stat-val" style="color:#11cdef">{{ stats.users }}</div>
+        <div class="stat-lbl">Team Members</div>
+      </div>
+    </a>
+  </div>
+</div>
+
+<!-- ══ Charts + My Issues ══ -->
+<div class="row g-3 mb-4">
+  <!-- Priority Chart -->
+  <div class="col-md-4">
+    <div class="card h-100">
+      <div class="card-header"><i class="bi bi-pie-chart-fill" style="color:var(--accent)"></i> By Priority</div>
+      <div class="card-body d-flex align-items-center justify-content-center">
+        <canvas id="prioChart" width="220" height="220"></canvas>
+      </div>
+    </div>
+  </div>
+  <!-- Status Chart -->
+  <div class="col-md-4">
+    <div class="card h-100">
+      <div class="card-header"><i class="bi bi-bar-chart-fill" style="color:var(--accent2)"></i> By Status</div>
+      <div class="card-body d-flex align-items-center justify-content-center">
+        <canvas id="statusChart" width="220" height="220"></canvas>
+      </div>
+    </div>
+  </div>
+  <!-- My Issues -->
+  <div class="col-md-4">
+    <div class="card h-100">
+      <div class="card-header"><i class="bi bi-person-check-fill" style="color:var(--success)"></i> Assigned To Me</div>
+      <div class="card-body p-0">
+        {% if my_issues %}
+          {% for i in my_issues %}
+          <a href="{{ url_for('issue_detail', iid=i.issue_id) }}"
+             style="display:flex;align-items:center;gap:10px;padding:11px 16px;
+                    border-bottom:1px solid var(--border);text-decoration:none;
+                    color:var(--text);transition:background .15s;"
+             onmouseover="this.style.background='rgba(79,142,247,.05)'"
+             onmouseout="this.style.background=''">
+            <span class="badge badge-prio-{{ i.priority }}">{{ i.priority }}</span>
+            <span style="flex:1;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text)">{{ i.title }}</span>
+            <span class="badge badge-status-{{ i.status }}" style="font-size:10px;white-space:nowrap">{{ i.status.replace('_',' ') }}</span>
+          </a>
+          {% endfor %}
+        {% else %}
+          <div class="empty-state"><i class="bi bi-check2-all"></i><p>No open assignments</p></div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ Recent Issues + Activity ══ -->
+<div class="row g-3 mb-4">
+  <!-- Recent Issues table -->
+  <div class="col-lg-7">
+    <div class="card">
+      <div class="card-header">
+        <i class="bi bi-clock-history" style="color:var(--warning)"></i> Recent Issues
+        <a href="{{ url_for('issues') }}" class="ms-auto btn btn-outline-secondary btn-sm">View All</a>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead><tr>
+            <th>#</th><th>Title</th><th>Project</th><th>Priority</th><th>Status</th><th>Reporter</th>
+          </tr></thead>
+          <tbody>
+          {% for i in recent %}
+          <tr>
+            <td><code>#{{ i.issue_id }}</code></td>
+            <td><a href="{{ url_for('issue_detail', iid=i.issue_id) }}">{{ i.title|truncate(40) }}</a></td>
+            <td style="font-size:12px;color:var(--muted)">{{ i.project_name }}</td>
+            <td><span class="badge badge-prio-{{ i.priority }}">{{ i.priority }}</span></td>
+            <td><span class="badge badge-status-{{ i.status }}">{{ i.status.replace('_',' ') }}</span></td>
+            <td style="font-size:12px;color:var(--muted)">{{ i.reporter }}</td>
+          </tr>
+          {% else %}
+          <tr><td colspan="6" class="text-center" style="color:var(--muted);padding:24px">No issues yet</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Status Changes -->
+  <div class="col-lg-5">
+    <div class="card">
+      <div class="card-header"><i class="bi bi-activity" style="color:var(--info)"></i> Recent Activity</div>
+      <div class="card-body">
+        <div class="timeline">
+          {% for c in recent_changes %}
+          <div class="timeline-item">
+            <div class="timeline-dot"></div>
+            <div class="timeline-content">
+              <strong style="font-size:13px;color:var(--text)">{{ c.changed_by }}</strong>
+              <span style="color:var(--muted)"> changed </span>
+              <a href="{{ url_for('issue_detail', iid=c.issue_id) }}" style="color:var(--accent);text-decoration:none">#{{ c.issue_id }}</a>
+              <br>
+              {% if c.old_status %}
+              <span class="badge badge-status-{{ c.old_status }}">{{ c.old_status.replace('_',' ') }}</span>
+              <span style="color:var(--muted)">→</span>
+              <span class="badge badge-status-{{ c.new_status }}">{{ c.new_status.replace('_',' ') }}</span>
+              {% else %}
+              <span style="color:var(--muted)">Created as</span> <span class="badge badge-status-{{ c.new_status }}">{{ c.new_status }}</span>
+              {% endif %}
+            </div>
+            <div class="timeline-time">{{ c.changed_at.strftime('%b %d, %H:%M') }}</div>
+          </div>
+          {% else %}
+          <div class="empty-state"><i class="bi bi-activity"></i><p>No activity yet</p></div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ Project Stats (uses VIEW v_project_stats) ══ -->
+<div class="row g-3">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header">
+        <i class="bi bi-bar-chart-steps" style="color:var(--success)"></i>
+        Project Overview
+        <span style="margin-left:8px;font-size:11px;padding:2px 8px;border-radius:10px;
+                     background:rgba(45,206,137,.15);color:#2dce89;font-weight:600">
+          via VIEW v_project_stats
+        </span>
+        <a href="{{ url_for('projects') }}" class="ms-auto btn btn-outline-secondary btn-sm">All Projects</a>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead><tr>
+            <th>Project</th>
+            <th style="text-align:center">Total</th>
+            <th style="text-align:center">Open</th>
+            <th style="text-align:center">In Progress</th>
+            <th style="text-align:center">Done</th>
+            <th style="text-align:center">Critical</th>
+            <th>Progress</th>
+          </tr></thead>
+          <tbody>
+          {% for p in project_stats %}
+          {% set pct = ((p.done_issues / p.total_issues * 100)|int) if p.total_issues > 0 else 0 %}
+          <tr>
+            <td>
+              <a href="{{ url_for('project_detail', pid=p.project_id) }}"
+                 style="font-weight:600;color:var(--text);text-decoration:none">
+                {{ p.project_name }}
+              </a>
+            </td>
+            <td style="text-align:center;color:var(--muted)">{{ p.total_issues }}</td>
+            <td style="text-align:center"><span class="badge badge-status-open">{{ p.open_issues }}</span></td>
+            <td style="text-align:center"><span class="badge badge-status-in_progress">{{ p.inprog_issues }}</span></td>
+            <td style="text-align:center"><span class="badge badge-status-resolved">{{ p.done_issues }}</span></td>
+            <td style="text-align:center">
+              {% if p.critical_count > 0 %}
+              <span class="badge badge-prio-critical">{{ p.critical_count }}</span>
+              {% else %}<span style="color:var(--muted)">—</span>{% endif %}
+            </td>
+            <td style="min-width:120px">
+              <div style="display:flex;align-items:center;gap:8px">
+                <div style="flex:1;height:5px;background:var(--border);border-radius:10px;overflow:hidden">
+                  <div style="height:100%;width:{{ pct }}%;background:linear-gradient(90deg,var(--accent),var(--success));border-radius:10px;transition:width .4s"></div>
+                </div>
+                <span style="font-size:11px;color:var(--muted);min-width:28px">{{ pct }}%</span>
+              </div>
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="7" style="text-align:center;color:var(--muted);padding:24px">No projects yet</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+const prio = {{ prio_data|safe }};
+const stat = {{ status_data|safe }};
+
+const chartDefaults = {
+  responsive: true,
+  plugins: {
+    legend: { labels: { color: '#9aa0b8', font: { family: 'Space Grotesk', size: 12 } } }
+  }
+};
+
+new Chart(document.getElementById('prioChart'), {
+  type: 'doughnut',
+  data: {
+    labels: ['Critical','High','Medium','Low'],
+    datasets: [{
+      data: [prio.critical||0, prio.high||0, prio.medium||0, prio.low||0],
+      backgroundColor: ['#f5365c','#f5a623','#4f8ef7','#11cdef'],
+      borderColor: '#181b22', borderWidth: 3, hoverOffset: 6
+    }]
+  },
+  options: { ...chartDefaults, cutout: '68%' }
+});
+
+new Chart(document.getElementById('statusChart'), {
+  type: 'bar',
+  data: {
+    labels: ['Open','In Progress','Resolved','Closed'],
+    datasets: [{
+      data: [stat.open||0, stat.in_progress||0, stat.resolved||0, stat.closed||0],
+      backgroundColor: ['rgba(245,54,92,.7)','rgba(245,166,35,.7)','rgba(45,206,137,.7)','rgba(124,130,152,.7)'],
+      borderRadius: 6, borderSkipped: false
+    }]
+  },
+  options: {
+    ...chartDefaults,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { grid: { color: '#252932' }, ticks: { color: '#9aa0b8' } },
+      y: { grid: { color: '#252932' }, ticks: { color: '#9aa0b8', precision: 0 } }
+    }
+  }
+});
+</script>
+{% endblock %}

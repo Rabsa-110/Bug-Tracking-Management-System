@@ -1,0 +1,352 @@
+{% extends 'base.html' %}
+{% block title %}DBMS Features{% endblock %}
+{% block page_title %}DBMS Features Demo{% endblock %}
+{% block breadcrumb %}<li>DBMS Features</li>{% endblock %}
+
+{% block content %}
+
+<!-- Header Info -->
+<div style="display:flex;gap:12px;margin-bottom:24px;flex-wrap:wrap">
+  <div style="flex:1;min-width:200px;padding:16px 20px;background:rgba(79,142,247,.08);
+              border:1px solid rgba(79,142,247,.2);border-radius:12px">
+    <div style="font-size:11px;font-weight:700;text-transform:uppercase;
+                letter-spacing:1px;color:var(--accent);margin-bottom:6px">
+      <i class="bi bi-eye-fill me-1"></i>Views Created
+    </div>
+    <div style="font-size:28px;font-weight:700;color:var(--accent)">3</div>
+    <div style="font-size:12px;color:var(--muted)">v_issue_summary, v_project_stats, v_user_activity</div>
+  </div>
+  <div style="flex:1;min-width:200px;padding:16px 20px;background:rgba(45,206,137,.08);
+              border:1px solid rgba(45,206,137,.2);border-radius:12px">
+    <div style="font-size:11px;font-weight:700;text-transform:uppercase;
+                letter-spacing:1px;color:var(--success);margin-bottom:6px">
+      <i class="bi bi-gear-fill me-1"></i>Functions Created
+    </div>
+    <div style="font-size:28px;font-weight:700;color:var(--success)">2</div>
+    <div style="font-size:12px;color:var(--muted)">fn_count_open_issues, fn_issue_priority_score</div>
+  </div>
+  <div style="flex:1;min-width:200px;padding:16px 20px;background:rgba(245,166,35,.08);
+              border:1px solid rgba(245,166,35,.2);border-radius:12px">
+    <div style="font-size:11px;font-weight:700;text-transform:uppercase;
+                letter-spacing:1px;color:var(--warning);margin-bottom:6px">
+      <i class="bi bi-lightning-fill me-1"></i>Triggers Created
+    </div>
+    <div style="font-size:28px;font-weight:700;color:var(--warning)">2</div>
+    <div style="font-size:12px;color:var(--muted)">trg_after_issue_insert, trg_after_issue_status_update</div>
+  </div>
+</div>
+
+<!-- ═══ VIEWS ═══ -->
+<div class="card mb-4">
+  <div class="card-header">
+    <i class="bi bi-eye-fill" style="color:var(--accent)"></i>
+    VIEWS — Virtual tables created from SQL queries
+  </div>
+  <div class="card-body">
+
+    <!-- What is a View -->
+    <div style="padding:14px;background:rgba(79,142,247,.06);border:1px solid rgba(79,142,247,.15);
+                border-radius:10px;margin-bottom:20px;font-size:13px;color:var(--muted)">
+      <strong style="color:var(--text)">What is a View?</strong><br>
+      A VIEW is a saved SQL query stored as a virtual table.
+      Instead of writing a long JOIN query every time, we just call the view name.
+      Views do not store data — they fetch live data each time they are used.
+    </div>
+
+    <!-- VIEW 1 -->
+    <div style="margin-bottom:24px">
+      <div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:8px">
+        <i class="bi bi-table me-1"></i>VIEW 1 — v_issue_summary
+      </div>
+      <div style="background:#0d0f14;border:1px solid var(--border);border-radius:8px;
+                  padding:12px 16px;font-family:'JetBrains Mono',monospace;
+                  font-size:12px;color:#a8c4f0;margin-bottom:12px;overflow-x:auto">
+        SELECT * FROM v_issue_summary;
+      </div>
+      <div class="table-responsive">
+        <table class="table table-hover mb-0" style="font-size:12px">
+          <thead>
+            <tr>
+              <th>#</th><th>Title</th><th>Status</th><th>Priority</th>
+              <th>Project</th><th>Reporter</th><th>Assignee</th>
+            </tr>
+          </thead>
+          <tbody>
+          {% for r in issue_summary %}
+          <tr>
+            <td><code>#{{ r.issue_id }}</code></td>
+            <td>{{ r.title|truncate(35) }}</td>
+            <td><span class="badge badge-status-{{ r.status }}">{{ r.status.replace('_',' ') }}</span></td>
+            <td><span class="badge badge-prio-{{ r.priority }}">{{ r.priority }}</span></td>
+            <td style="color:var(--muted)">{{ r.project_name }}</td>
+            <td style="color:var(--muted)">{{ r.reporter_name }}</td>
+            <td style="color:var(--muted)">{{ r.assignee_name or '—' }}</td>
+          </tr>
+          {% else %}
+          <tr><td colspan="7" style="text-align:center;color:var(--muted);padding:20px">No data</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- VIEW 2 -->
+    <div style="margin-bottom:24px">
+      <div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:8px">
+        <i class="bi bi-bar-chart-fill me-1"></i>VIEW 2 — v_project_stats
+      </div>
+      <div style="background:#0d0f14;border:1px solid var(--border);border-radius:8px;
+                  padding:12px 16px;font-family:'JetBrains Mono',monospace;
+                  font-size:12px;color:#a8c4f0;margin-bottom:12px">
+        SELECT * FROM v_project_stats;
+      </div>
+      <div class="table-responsive">
+        <table class="table table-hover mb-0" style="font-size:12px">
+          <thead>
+            <tr>
+              <th>Project</th><th>Total</th><th>Open</th>
+              <th>In Progress</th><th>Resolved</th><th>Critical</th>
+            </tr>
+          </thead>
+          <tbody>
+          {% for r in project_stats %}
+          <tr>
+            <td style="font-weight:600">{{ r.project_name }}</td>
+            <td><span style="font-weight:700;color:var(--accent)">{{ r.total_issues }}</span></td>
+            <td><span style="color:#f5365c">{{ r.open_issues }}</span></td>
+            <td><span style="color:#f5a623">{{ r.inprog_issues }}</span></td>
+            <td><span style="color:#2dce89">{{ r.resolved_issues }}</span></td>
+            <td><span style="color:#f5365c;font-weight:700">{{ r.critical_count }}</span></td>
+          </tr>
+          {% else %}
+          <tr><td colspan="6" style="text-align:center;color:var(--muted);padding:20px">No data</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- VIEW 3 -->
+    <div>
+      <div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:8px">
+        <i class="bi bi-people-fill me-1"></i>VIEW 3 — v_user_activity
+      </div>
+      <div style="background:#0d0f14;border:1px solid var(--border);border-radius:8px;
+                  padding:12px 16px;font-family:'JetBrains Mono',monospace;
+                  font-size:12px;color:#a8c4f0;margin-bottom:12px">
+        SELECT * FROM v_user_activity;
+      </div>
+      <div class="table-responsive">
+        <table class="table table-hover mb-0" style="font-size:12px">
+          <thead>
+            <tr>
+              <th>User</th><th>Role</th><th>Open Assigned</th>
+              <th>Comments</th><th>Attachments</th>
+            </tr>
+          </thead>
+          <tbody>
+          {% for r in user_activity %}
+          <tr>
+            <td style="font-weight:600">{{ r.name }}</td>
+            <td><span class="role-badge role-{{ r.role }}">{{ r.role }}</span></td>
+            <td><span style="color:#f5365c;font-weight:700">{{ r.open_assigned }}</span></td>
+            <td><span style="color:#4f8ef7;font-weight:700">{{ r.total_comments }}</span></td>
+            <td><span style="color:#f5a623;font-weight:700">{{ r.total_attachments }}</span></td>
+          </tr>
+          {% else %}
+          <tr><td colspan="5" style="text-align:center;color:var(--muted);padding:20px">No data</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══ FUNCTIONS ═══ -->
+<div class="card mb-4">
+  <div class="card-header">
+    <i class="bi bi-gear-fill" style="color:var(--success)"></i>
+    FUNCTIONS — Reusable SQL logic that returns a value
+  </div>
+  <div class="card-body">
+
+    <div style="padding:14px;background:rgba(45,206,137,.06);border:1px solid rgba(45,206,137,.15);
+                border-radius:10px;margin-bottom:20px;font-size:13px;color:var(--muted)">
+      <strong style="color:var(--text)">What is a Function?</strong><br>
+      A FUNCTION takes input values, performs a calculation, and returns a single result.
+      It is called inside a SELECT query just like COUNT() or SUM().
+    </div>
+
+    <div class="row g-3">
+
+      <!-- FUNCTION 1 -->
+      <div class="col-md-6">
+        <div style="border:1px solid var(--border);border-radius:12px;padding:16px">
+          <div style="font-size:13px;font-weight:700;color:var(--success);margin-bottom:8px">
+            fn_count_open_issues(project_id)
+          </div>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:12px">
+            Returns the number of open issues for a given project
+          </div>
+          <div style="background:#0d0f14;border:1px solid var(--border);border-radius:8px;
+                      padding:10px 14px;font-family:'JetBrains Mono',monospace;
+                      font-size:11px;color:#a8c4f0;margin-bottom:12px">
+            SELECT fn_count_open_issues(project_id);
+          </div>
+          <table class="table mb-0" style="font-size:12px">
+            <thead><tr><th>Project</th><th>Open Issues</th></tr></thead>
+            <tbody>
+            {% for r in fn_open_issues %}
+            <tr>
+              <td>{{ r.project_name }}</td>
+              <td>
+                <span style="font-weight:700;
+                  color:{% if r.open_count > 0 %}#f5365c{% else %}#2dce89{% endif %}">
+                  {{ r.open_count }}
+                </span>
+              </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- FUNCTION 2 -->
+      <div class="col-md-6">
+        <div style="border:1px solid var(--border);border-radius:12px;padding:16px">
+          <div style="font-size:13px;font-weight:700;color:var(--success);margin-bottom:8px">
+            fn_issue_priority_score(issue_id)
+          </div>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:12px">
+            Returns numeric score: critical=4, high=3, medium=2, low=1
+          </div>
+          <div style="background:#0d0f14;border:1px solid var(--border);border-radius:8px;
+                      padding:10px 14px;font-family:'JetBrains Mono',monospace;
+                      font-size:11px;color:#a8c4f0;margin-bottom:12px">
+            SELECT fn_issue_priority_score(issue_id);
+          </div>
+          <table class="table mb-0" style="font-size:12px">
+            <thead><tr><th>Issue</th><th>Priority</th><th>Score</th></tr></thead>
+            <tbody>
+            {% for r in fn_priority_scores %}
+            <tr>
+              <td>{{ r.title|truncate(25) }}</td>
+              <td><span class="badge badge-prio-{{ r.priority }}">{{ r.priority }}</span></td>
+              <td>
+                <span style="font-weight:700;font-size:14px;
+                  color:{% if r.score==4 %}#f5365c
+                        {% elif r.score==3 %}#f5a623
+                        {% elif r.score==2 %}#4f8ef7
+                        {% else %}#11cdef{% endif %}">
+                  {{ r.score }}
+                </span>
+              </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ TRIGGERS ═══ -->
+<div class="card mb-4">
+  <div class="card-header">
+    <i class="bi bi-lightning-fill" style="color:var(--warning)"></i>
+    TRIGGERS — Auto-execute when database events happen
+  </div>
+  <div class="card-body">
+
+    <div style="padding:14px;background:rgba(245,166,35,.06);border:1px solid rgba(245,166,35,.15);
+                border-radius:10px;margin-bottom:20px;font-size:13px;color:var(--muted)">
+      <strong style="color:var(--text)">What is a Trigger?</strong><br>
+      A TRIGGER automatically runs a SQL action when something happens in the database
+      (INSERT, UPDATE, DELETE). No manual call needed — MySQL fires it automatically.
+    </div>
+
+    <div class="row g-3 mb-4">
+      <div class="col-md-6">
+        <div style="padding:16px;border:1px solid rgba(245,166,35,.2);
+                    border-radius:12px;background:rgba(245,166,35,.04)">
+          <div style="font-size:13px;font-weight:700;color:var(--warning);margin-bottom:6px">
+            <i class="bi bi-lightning-fill me-1"></i>trg_after_issue_insert
+          </div>
+          <div style="font-size:12px;color:var(--muted);line-height:1.6">
+            Fires <strong style="color:var(--text)">AFTER INSERT</strong> on Issue table.<br>
+            Automatically adds a record to Issue_Status_History
+            when a new bug is reported with status = 'open'.
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div style="padding:16px;border:1px solid rgba(245,166,35,.2);
+                    border-radius:12px;background:rgba(245,166,35,.04)">
+          <div style="font-size:13px;font-weight:700;color:var(--warning);margin-bottom:6px">
+            <i class="bi bi-lightning-fill me-1"></i>trg_after_issue_status_update
+          </div>
+          <div style="font-size:12px;color:var(--muted);line-height:1.6">
+            Fires <strong style="color:var(--text)">AFTER UPDATE</strong> on Issue table.<br>
+            When status changes (open→in_progress etc.),
+            it auto-inserts old and new status into Issue_Status_History.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Trigger Log -->
+    <div style="font-size:13px;font-weight:700;color:var(--warning);margin-bottom:10px">
+      <i class="bi bi-clock-history me-1"></i>
+      Trigger Log — Issue_Status_History (auto-recorded entries)
+    </div>
+    <div class="table-responsive">
+      <table class="table table-hover mb-0" style="font-size:12px">
+        <thead>
+          <tr>
+            <th>#</th><th>Issue</th><th>Changed By</th>
+            <th>Old Status</th><th>New Status</th><th>When</th>
+          </tr>
+        </thead>
+        <tbody>
+        {% for r in trigger_log %}
+        <tr>
+          <td><code>{{ r.history_id }}</code></td>
+          <td>
+            <a href="{{ url_for('issue_detail', iid=r.issue_id) }}">
+              {{ r.issue_title|truncate(30) }}
+            </a>
+          </td>
+          <td style="color:var(--muted)">{{ r.changer }}</td>
+          <td>
+            {% if r.old_status %}
+            <span class="badge badge-status-{{ r.old_status }}">
+              {{ r.old_status.replace('_',' ') }}
+            </span>
+            {% else %}
+            <span style="color:var(--muted);font-size:11px">— created —</span>
+            {% endif %}
+          </td>
+          <td>
+            <span class="badge badge-status-{{ r.new_status }}">
+              {{ r.new_status.replace('_',' ') }}
+            </span>
+          </td>
+          <td style="color:var(--muted)">{{ r.changed_at.strftime('%b %d, %Y %H:%M') }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6" style="text-align:center;color:var(--muted);padding:24px">
+          No trigger log yet. Update an issue status to fire the trigger!
+        </td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+</div>
+
+{% endblock %}

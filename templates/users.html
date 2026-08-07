@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+{% block title %}Users{% endblock %}
+{% block page_title %}Team Members{% endblock %}
+{% block breadcrumb %}<li>Users</li>{% endblock %}
+{% block topbar_actions %}
+  {% if session.role == 'admin' %}
+  <a href="{{ url_for('new_user') }}" class="btn btn-primary btn-sm">
+    <i class="bi bi-person-plus-fill me-1"></i>Add User
+  </a>
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="row g-3">
+  {% for u in users %}
+  <div class="col-md-6 col-xl-4">
+    <div class="card">
+      <div class="card-body">
+        <div class="d-flex align-items-center gap-12 gap-3 mb-3">
+          <div style="width:46px;height:46px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;flex-shrink:0">
+            {{ u.name[:2].upper() }}
+          </div>
+          <div style="flex:1;min-width:0">
+            <div style="font-weight:700;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ u.name }}</div>
+            <div style="font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ u.email }}</div>
+          </div>
+          <span class="role-badge role-{{ u.role }}">{{ u.role }}</span>
+        </div>
+
+        <div style="display:flex;gap:12px;margin-bottom:14px">
+          <div style="flex:1;text-align:center;padding:8px;background:rgba(245,54,92,.08);border-radius:8px">
+            <div style="font-size:20px;font-weight:700;color:#f5365c">{{ u.assigned_open }}</div>
+            <div style="font-size:10px;color:var(--muted)">Open Issues</div>
+          </div>
+          <div style="flex:1;text-align:center;padding:8px;background:rgba(79,142,247,.08);border-radius:8px">
+            <div style="font-size:20px;font-weight:700;color:#4f8ef7">{{ u.comment_count }}</div>
+            <div style="font-size:10px;color:var(--muted)">Comments</div>
+          </div>
+        </div>
+
+        <div style="display:flex;justify-content:space-between;align-items:center;padding-top:12px;border-top:1px solid var(--border)">
+          <span style="font-size:11px;color:var(--muted)">
+            <i class="bi bi-calendar3 me-1"></i>{{ u.created_at.strftime('%b %Y') }}
+          </span>
+          <div class="d-flex gap-2">
+            <a href="{{ url_for('issues', assigned=u.user_id) }}"
+               class="btn btn-sm btn-outline-secondary" title="View Issues">
+              <i class="bi bi-bug"></i>
+            </a>
+            {% if session.role == 'admin' and u.user_id != session.user_id %}
+            <form method="POST" action="{{ url_for('delete_user', uid=u.user_id) }}"
+            <a href="{{ url_for('edit_user', uid=u.user_id) }}"
+   class="btn btn-sm"
+   style="background:rgba(79,142,247,.15);color:#4f8ef7;
+          border:1px solid rgba(79,142,247,.3)">
+  <i class="bi bi-pencil-square"></i>
+</a>
+                  onsubmit="return confirm('Delete user {{ u.name }}?')">
+              <button type="submit" class="btn btn-sm" style="background:rgba(245,54,92,.12);color:#f5365c;border:1px solid rgba(245,54,92,.25)" title="Delete">
+                <i class="bi bi-trash"></i>
+              </button>
+            </form>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% else %}
+  <div class="col-12">
+    <div class="card"><div class="empty-state"><i class="bi bi-people"></i><p>No users found.</p></div></div>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

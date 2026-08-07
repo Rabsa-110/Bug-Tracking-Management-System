@@ -1,0 +1,101 @@
+{% extends 'base.html' %}
+{% block title %}All Issues{% endblock %}
+{% block page_title %}All Issues{% endblock %}
+{% block breadcrumb %}<li>Issues</li>{% endblock %}
+{% block topbar_actions %}
+  <a href="{{ url_for('new_issue') }}" class="btn btn-primary btn-sm">
+    <i class="bi bi-plus-lg me-1"></i>Report Issue
+  </a>
+{% endblock %}
+
+{% block content %}
+<div class="card mb-3">
+  <div class="card-body" style="padding:14px 18px">
+    <form method="GET" class="d-flex gap-2 flex-wrap align-items-center">
+      <div style="position:relative;flex:1;min-width:200px">
+        <i class="bi bi-search" style="position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--muted)"></i>
+        <input type="text" name="q" value="{{ search }}" class="form-control" placeholder="Search title or description…" style="padding-left:34px"/>
+      </div>
+      <select name="project" class="form-select" style="width:auto;min-width:160px">
+        <option value="">All Projects</option>
+        {% for p in proj_list %}
+        <option value="{{ p.project_id }}" {% if pid|string==p.project_id|string %}selected{% endif %}>{{ p.project_name }}</option>
+        {% endfor %}
+      </select>
+      <select name="status" class="form-select" style="width:auto;min-width:130px">
+        <option value="">All Statuses</option>
+        {% for s in ['open','in_progress','resolved','closed'] %}
+        <option value="{{ s }}" {% if sf==s %}selected{% endif %}>{{ s.replace('_',' ').title() }}</option>
+        {% endfor %}
+      </select>
+      <select name="priority" class="form-select" style="width:auto;min-width:130px">
+        <option value="">All Priorities</option>
+        {% for p in ['critical','high','medium','low'] %}
+        <option value="{{ p }}" {% if pf==p %}selected{% endif %}>{{ p.title() }}</option>
+        {% endfor %}
+      </select>
+      <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-funnel me-1"></i>Filter</button>
+      {% if sf or pf or pid or search %}
+      <a href="{{ url_for('issues') }}" class="btn btn-outline-secondary btn-sm">✕ Clear</a>
+      {% endif %}
+    </form>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <i class="bi bi-bug-fill" style="color:var(--accent)"></i>
+    Issues
+    <span style="margin-left:6px;font-size:11px;padding:2px 8px;border-radius:10px;background:rgba(79,142,247,.15);color:var(--accent)">{{ issues|length }}</span>
+  </div>
+  {% if issues %}
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead><tr>
+        <th style="width:55px">#</th>
+        <th>Title</th>
+        <th>Project</th>
+        <th>Priority</th>
+        <th>Status</th>
+        <th>Assignee</th>
+        <th>Created</th>
+      </tr></thead>
+      <tbody>
+      {% for i in issues %}
+      <tr>
+        <td><code>#{{ i.issue_id }}</code></td>
+        <td>
+          <a href="{{ url_for('issue_detail', iid=i.issue_id) }}" style="font-weight:500">{{ i.title }}</a>
+        </td>
+        <td>
+          <a href="{{ url_for('project_detail', pid=i.project_id) }}"
+             style="color:var(--muted);font-size:12px;text-decoration:none">
+            {{ i.project_name }}
+          </a>
+        </td>
+        <td><span class="badge badge-prio-{{ i.priority }}">{{ i.priority }}</span></td>
+        <td><span class="badge badge-status-{{ i.status }}">{{ i.status.replace('_',' ') }}</span></td>
+        <td style="font-size:12px;color:var(--muted)">
+          {% if i.assignee %}
+          <span style="display:inline-flex;align-items:center;gap:5px">
+            <span style="width:22px;height:22px;border-radius:50%;background:var(--accent2);display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700">{{ i.assignee[:1] }}</span>
+            {{ i.assignee }}
+          </span>
+          {% else %}<span style="color:var(--border)">Unassigned</span>{% endif %}
+        </td>
+        <td style="font-size:12px;color:var(--muted)">{{ i.created_at.strftime('%b %d, %Y') }}</td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <i class="bi bi-bug"></i>
+    <h5>No Issues Found</h5>
+    <p style="font-size:13px;margin-bottom:16px">Try adjusting your filters or report a new issue.</p>
+    <a href="{{ url_for('new_issue') }}" class="btn btn-primary">Report Issue</a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

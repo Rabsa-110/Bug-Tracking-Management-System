@@ -1,0 +1,172 @@
+{% extends 'base.html' %}
+{% block title %}My Profile{% endblock %}
+{% block page_title %}My Profile{% endblock %}
+{% block breadcrumb %}<li>Profile</li>{% endblock %}
+
+{% block content %}
+<div class="row g-3">
+
+  <!-- LEFT: Profile Card -->
+  <div class="col-md-4">
+    <div class="card mb-3">
+      <div class="card-body" style="text-align:center;padding:32px 20px">
+        <!-- Avatar -->
+        <div style="width:72px;height:72px;border-radius:50%;
+                    background:linear-gradient(135deg,var(--accent),var(--accent2));
+                    display:flex;align-items:center;justify-content:center;
+                    font-weight:700;font-size:28px;margin:0 auto 14px;color:#fff">
+          {{ user.name[:2].upper() }}
+        </div>
+        <h4 style="font-size:17px;font-weight:700;margin-bottom:4px">{{ user.name }}</h4>
+        <div style="color:var(--muted);font-size:13px;margin-bottom:10px">{{ user.email }}</div>
+        <span class="role-badge role-{{ user.role }}" style="font-size:13px;padding:4px 14px">
+          {{ user.role }}
+        </span>
+        <div style="margin-top:14px;font-size:12px;color:var(--muted)">
+          Member since {{ user.created_at.strftime('%B %Y') }}
+        </div>
+
+        <!-- Logout Button -->
+        <div style="margin-top:20px">
+          <a href="{{ url_for('logout') }}"
+             style="display:flex;align-items:center;justify-content:center;gap:10px;
+                    padding:12px 20px;background:rgba(245,54,92,.15);color:#f5365c;
+                    border:2px solid rgba(245,54,92,.4);border-radius:12px;
+                    text-decoration:none;font-weight:700;font-size:14px;
+                    transition:all .2s;width:100%"
+             onmouseover="this.style.background='rgba(245,54,92,.3)'"
+             onmouseout="this.style.background='rgba(245,54,92,.15)'">
+            <i class="bi bi-box-arrow-right" style="font-size:18px"></i>
+            Logout
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- UPDATE FORM -->
+    <div class="card">
+      <div class="card-header">
+        <i class="bi bi-pencil-square" style="color:var(--accent)"></i>
+        Update Profile
+      </div>
+      <div class="card-body">
+        <form method="POST">
+
+          <!-- Update Name -->
+          <div class="mb-3">
+            <label class="form-label">Display Name</label>
+            <input type="text" name="name" class="form-control"
+                   value="{{ user.name }}" required/>
+          </div>
+
+          <hr style="border-color:var(--border);margin:16px 0"/>
+
+          <div style="font-size:12px;color:var(--muted);margin-bottom:12px">
+            <i class="bi bi-lock-fill me-1"></i>
+            Change Password — leave blank to keep current
+          </div>
+
+          <!-- Current Password -->
+          <div class="mb-3">
+            <label class="form-label">Current Password *</label>
+            <input type="password" name="current_password"
+                   class="form-control"
+                   placeholder="Enter current password"
+                   required/>
+          </div>
+
+          <!-- New Password -->
+          <div class="mb-3">
+            <label class="form-label">New Password</label>
+            <input type="password" name="new_password"
+                   class="form-control"
+                   placeholder="Leave blank to keep current"/>
+          </div>
+
+          <button type="submit" class="btn btn-primary w-100">
+            <i class="bi bi-check-lg me-1"></i>Save Changes
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: Issues and Comments -->
+  <div class="col-md-8">
+
+    <!-- My Assigned Issues -->
+    <div class="card mb-3">
+      <div class="card-header">
+        <i class="bi bi-bug-fill" style="color:var(--danger)"></i>
+        Issues Assigned To Me
+      </div>
+      {% if my_issues %}
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Title</th>
+              <th>Project</th>
+              <th>Priority</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+          {% for i in my_issues %}
+          <tr>
+            <td><code>#{{ i.issue_id }}</code></td>
+            <td>
+              <a href="{{ url_for('issue_detail', iid=i.issue_id) }}">
+                {{ i.title|truncate(45) }}
+              </a>
+            </td>
+            <td style="font-size:12px;color:var(--muted)">{{ i.project_name }}</td>
+            <td><span class="badge badge-prio-{{ i.priority }}">{{ i.priority }}</span></td>
+            <td><span class="badge badge-status-{{ i.status }}">{{ i.status.replace('_',' ') }}</span></td>
+          </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="empty-state">
+        <i class="bi bi-check2-all"></i>
+        <p>No issues assigned to you.</p>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- My Recent Comments -->
+    <div class="card">
+      <div class="card-header">
+        <i class="bi bi-chat-left-text-fill" style="color:var(--accent)"></i>
+        My Recent Comments
+      </div>
+      <div class="card-body">
+        {% if my_comments %}
+          {% for c in my_comments %}
+          <div style="padding:12px 0;border-bottom:1px solid var(--border)">
+            <div style="font-size:12px;color:var(--muted);margin-bottom:4px">
+              On
+              <a href="{{ url_for('issue_detail', iid=c.issue_id) }}"
+                 style="color:var(--accent);text-decoration:none">
+                {{ c.title|truncate(40) }}
+              </a>
+              · {{ c.timestamp.strftime('%b %d, %Y') }}
+            </div>
+            <div style="font-size:13.5px">{{ c.comment_text|truncate(120) }}</div>
+          </div>
+          {% endfor %}
+        {% else %}
+        <div class="empty-state">
+          <i class="bi bi-chat-left"></i>
+          <p>No comments yet.</p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

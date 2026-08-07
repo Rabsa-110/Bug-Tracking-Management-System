@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+{% block title %}Report Issue{% endblock %}
+{% block page_title %}Report New Issue{% endblock %}
+{% block breadcrumb %}<li><a href="{{ url_for('issues') }}">Issues</a></li><li>New</li>{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-8">
+    <div class="card">
+      <div class="card-header"><i class="bi bi-bug-fill" style="color:var(--danger)"></i> Report a Bug / Issue</div>
+      <div class="card-body">
+        <form method="POST">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">Project *</label>
+              <select name="project_id" class="form-select" required>
+                <option value="">— Select Project —</option>
+                {% for p in proj_list %}
+                <option value="{{ p.project_id }}" {% if preselect_pid|string == p.project_id|string %}selected{% endif %}>
+                  {{ p.project_name }}
+                </option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Priority</label>
+              <select name="priority" class="form-select">
+                <option value="low">🟦 Low</option>
+                <option value="medium" selected>🟨 Medium</option>
+                <option value="high">🟧 High</option>
+                <option value="critical">🟥 Critical</option>
+              </select>
+            </div>
+            <div class="col-12">
+              <label class="form-label">Issue Title *</label>
+              <input type="text" name="title" class="form-control"
+                     placeholder="Brief, clear summary of the bug…" required autofocus/>
+            </div>
+            <div class="col-12">
+              <label class="form-label">Description</label>
+              <textarea name="description" class="form-control" rows="5"
+                        placeholder="Steps to reproduce, expected vs actual behavior, environment details…"></textarea>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Assign To</label>
+              <select name="assigned_to" class="form-select">
+                <option value="">— Unassigned —</option>
+                {% for u in users %}
+                <option value="{{ u.user_id }}">{{ u.name }} ({{ u.role }})</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-12">
+              <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">
+                  <i class="bi bi-send-fill me-1"></i>Submit Issue
+                </button>
+                <a href="{{ url_for('issues') }}" class="btn btn-outline-secondary">Cancel</a>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

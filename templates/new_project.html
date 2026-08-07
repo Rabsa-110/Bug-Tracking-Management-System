@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% block title %}New Project{% endblock %}
+{% block page_title %}New Project{% endblock %}
+{% block breadcrumb %}<li><a href="{{ url_for('projects') }}">Projects</a></li><li>New</li>{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-7">
+    <div class="card">
+      <div class="card-header"><i class="bi bi-folder-plus" style="color:var(--accent)"></i> Create New Project</div>
+      <div class="card-body">
+        <form method="POST">
+          <div class="mb-3">
+            <label class="form-label">Project Name *</label>
+            <input type="text" name="name" class="form-control" placeholder="e.g. E-Commerce Platform" required autofocus/>
+          </div>
+          <div class="mb-4">
+            <label class="form-label">Description</label>
+            <textarea name="description" class="form-control" placeholder="Brief description of the project…" rows="4"></textarea>
+          </div>
+          <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i>Create Project</button>
+            <a href="{{ url_for('projects') }}" class="btn btn-outline-secondary">Cancel</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

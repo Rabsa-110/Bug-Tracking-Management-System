@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% block title %}Add User{% endblock %}
+{% block page_title %}Add User{% endblock %}
+{% block breadcrumb %}<li><a href="{{ url_for('users') }}">Users</a></li><li>New</li>{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header"><i class="bi bi-person-plus-fill" style="color:var(--accent)"></i> Create New User</div>
+      <div class="card-body">
+        <form method="POST">
+          <div class="mb-3">
+            <label class="form-label">Full Name *</label>
+            <input type="text" name="name" class="form-control" placeholder="e.g. John Smith" required autofocus/>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Email Address *</label>
+            <input type="email" name="email" class="form-control" placeholder="john@company.com" required/>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Password *</label>
+            <input type="password" name="password" class="form-control" placeholder="At least 6 characters" required/>
+          </div>
+          <div class="mb-4">
+            <label class="form-label">Role *</label>
+            <select name="role" class="form-select" required>
+              <option value="developer">Developer</option>
+              <option value="tester">Tester</option>
+              <option value="manager">Manager</option>
+              <option value="admin">Admin</option>
+            </select>
+          </div>
+          <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i>Create User</button>
+            <a href="{{ url_for('users') }}" class="btn btn-outline-secondary">Cancel</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

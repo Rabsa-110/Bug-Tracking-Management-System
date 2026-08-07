@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+{% block title %}Projects{% endblock %}
+{% block page_title %}Projects{% endblock %}
+{% block breadcrumb %}<li>Projects</li>{% endblock %}
+{% block topbar_actions %}
+  {% if session.role in ('admin','manager') %}
+  <a href="{{ url_for('new_project') }}" class="btn btn-primary btn-sm">
+    <i class="bi bi-plus-lg me-1"></i>New Project
+  </a>
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+{% if projects %}
+<div class="row g-3">
+  {% for p in projects %}
+  <div class="col-md-6 col-xl-4">
+    <div class="card h-100" style="transition:border-color .2s,transform .2s;cursor:pointer"
+         onmouseover="this.style.borderColor='var(--accent)';this.style.transform='translateY(-3px)'"
+         onmouseout="this.style.borderColor='var(--border)';this.style.transform=''">
+      <div class="card-body">
+        <div class="d-flex align-items-start justify-content-between mb-3">
+          <div style="width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">
+            📁
+          </div>
+          {% if session.role == 'admin' %}
+          <form method="POST" action="{{ url_for('delete_project', pid=p.project_id) }}"
+                onsubmit="return confirm('Delete project and ALL its issues?')">
+            <button type="submit" class="btn btn-sm btn-icon" style="background:transparent;border:none;color:var(--muted)" title="Delete">
+              <i class="bi bi-trash"></i>
+            </button>
+          </form>
+          {% endif %}
+        </div>
+        <a href="{{ url_for('project_detail', pid=p.project_id) }}" style="text-decoration:none;color:var(--text)">
+          <h5 style="font-size:15px;font-weight:700;margin-bottom:6px">{{ p.project_name }}</h5>
+        </a>
+        <p style="color:var(--muted);font-size:12.5px;line-height:1.5;margin-bottom:16px;min-height:36px">
+          {{ p.description|truncate(90) or 'No description.' }}
+        </p>
+
+        <!-- Progress bar -->
+        {% set done = (p.done_cnt or 0)|int %}
+        {% set total = (p.total or 0)|int %}
+        {% set pct = ((done / total * 100)|int) if total > 0 else 0 %}
+        <div style="margin-bottom:12px">
+          <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:4px">
+            <span>Progress</span><span>{{ pct }}%</span>
+          </div>
+          <div style="height:5px;background:var(--border);border-radius:10px;overflow:hidden">
+            <div style="height:100%;width:{{ pct }}%;background:linear-gradient(90deg,var(--accent),var(--success));border-radius:10px;transition:width .4s"></div>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <span style="font-size:11px;padding:3px 9px;border-radius:6px;background:rgba(245,54,92,.12);color:#f5365c">
+            {{ p.open_cnt or 0 }} open
+          </span>
+          <span style="font-size:11px;padding:3px 9px;border-radius:6px;background:rgba(245,166,35,.12);color:#f5a623">
+            {{ p.inprog_cnt or 0 }} in progress
+          </span>
+          <span style="font-size:11px;padding:3px 9px;border-radius:6px;background:rgba(45,206,137,.12);color:#2dce89">
+            {{ done }} done
+          </span>
+        </div>
+
+        <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+          <span style="font-size:12px;color:var(--muted)"><i class="bi bi-calendar3"></i> {{ p.created_at.strftime('%b %d, %Y') }}</span>
+          <a href="{{ url_for('project_detail', pid=p.project_id) }}" class="btn btn-sm btn-primary">
+            View Issues →
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="card"><div class="empty-state">
+  <i class="bi bi-folder2-open"></i>
+  <h4>No Projects Yet</h4>
+  <p style="font-size:13px;margin-bottom:16px">Create your first project to start tracking bugs.</p>
+  {% if session.role in ('admin','manager') %}
+  <a href="{{ url_for('new_project') }}" class="btn btn-primary">Create Project</a>
+  {% endif %}
+</div></div>
+{% endif %}
+{% endblock %}

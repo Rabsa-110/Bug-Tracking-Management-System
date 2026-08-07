@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Login — BugTracker</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet"/>
+  <style>
+    :root{--bg:#0d0f14;--card:#181b22;--border:#252932;--text:#e8eaf0;
+          --muted:#7c8298;--accent:#4f8ef7;--accent2:#7c5cfc;--danger:#f5365c;}
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--text);
+         min-height:100vh;display:flex;align-items:center;justify-content:center;
+         background-image:radial-gradient(ellipse at 20% 50%,rgba(79,142,247,.06) 0%,transparent 60%),
+                          radial-gradient(ellipse at 80% 20%,rgba(124,92,252,.06) 0%,transparent 60%);}
+    .login-wrap{width:100%;max-width:420px;padding:24px;}
+
+    .logo{text-align:center;margin-bottom:32px;}
+    .logo-icon{width:56px;height:56px;border-radius:16px;margin:0 auto 12px;
+               background:linear-gradient(135deg,var(--accent),var(--accent2));
+               display:flex;align-items:center;justify-content:center;font-size:28px;}
+    .logo h1{font-size:22px;font-weight:700;}
+    .logo p{color:var(--muted);font-size:13px;margin-top:4px;}
+
+    .card{background:var(--card);border:1px solid var(--border);
+          border-radius:18px;padding:32px;box-shadow:0 24px 64px rgba(0,0,0,.4);}
+    .card h2{font-size:18px;font-weight:700;margin-bottom:6px;}
+    .card p{color:var(--muted);font-size:13px;margin-bottom:24px;}
+
+    .form-group{margin-bottom:18px;}
+    label{display:block;font-size:11px;font-weight:600;text-transform:uppercase;
+          letter-spacing:.7px;color:var(--muted);margin-bottom:6px;}
+    .input-wrap{position:relative;}
+    .input-wrap i{position:absolute;left:13px;top:50%;transform:translateY(-50%);
+                  color:var(--muted);font-size:16px;}
+    input{width:100%;background:rgba(255,255,255,.05);border:1px solid var(--border);
+          border-radius:10px;color:var(--text);font-size:14px;
+          padding:11px 13px 11px 40px;font-family:inherit;
+          transition:border-color .18s,box-shadow .18s;}
+    input:focus{outline:none;border-color:var(--accent);
+                box-shadow:0 0 0 3px rgba(79,142,247,.15);}
+    input::placeholder{color:var(--muted);}
+
+    .btn-login{width:100%;background:linear-gradient(135deg,var(--accent),var(--accent2));
+               border:none;border-radius:10px;color:#fff;font-size:14px;font-weight:700;
+               padding:12px;cursor:pointer;transition:opacity .18s;
+               font-family:inherit;margin-top:6px;}
+    .btn-login:hover{opacity:.88;}
+
+    .alert{background:rgba(245,54,92,.12);border:1px solid rgba(245,54,92,.3);
+           color:#f5365c;border-radius:10px;padding:10px 14px;font-size:13px;
+           margin-bottom:18px;display:flex;align-items:center;gap:8px;}
+
+    .register-link{text-align:center;margin-top:20px;font-size:13px;color:var(--muted);}
+    .register-link a{color:var(--accent);font-weight:700;text-decoration:none;}
+    .register-link a:hover{text-decoration:underline;}
+  </style>
+</head>
+<body>
+  <div class="login-wrap">
+    <div class="logo">
+      <div class="logo-icon">🐛</div>
+      <h1>BugTracker</h1>
+      <p>Bug Tracking Management System</p>
+    </div>
+
+    <div class="card">
+      <h2>Sign In</h2>
+      <p>Enter your credentials to continue</p>
+
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for cat, msg in messages %}
+          <div class="alert"><i class="bi bi-exclamation-circle-fill"></i> {{ msg }}</div>
+        {% endfor %}
+      {% endwith %}
+
+      <form method="POST">
+        <div class="form-group">
+          <label>Email Address</label>
+          <div class="input-wrap">
+            <i class="bi bi-envelope-fill"></i>
+            <input type="email" name="email" placeholder="you@example.com" required autofocus/>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <div class="input-wrap">
+            <i class="bi bi-lock-fill"></i>
+            <input type="password" name="password" placeholder="••••••••" required/>
+          </div>
+        </div>
+        <button type="submit" class="btn-login">Sign In →</button>
+      </form>
+
+      <!-- Register link at bottom -->
+      <div class="register-link">
+        Don't have an account?
+        <a href="{{ url_for('register') }}">Register here</a>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

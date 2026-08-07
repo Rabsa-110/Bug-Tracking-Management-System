@@ -1,0 +1,134 @@
+{% extends 'base.html' %}
+{% block title %}DBMS Demo{% endblock %}
+{% block page_title %}DBMS Demo{% endblock %}
+{% block breadcrumb %}<li>DBMS Demo</li>{% endblock %}
+
+{% block topbar_actions %}
+<a href="{{ url_for('issues') }}" class="btn btn-outline-secondary btn-sm">
+  <i class="bi bi-bug-fill me-1"></i> Issues
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="row g-3 mb-4">
+  <div class="col-md-4">
+    <div class="stat-card">
+      <div class="stat-icon" style="background:rgba(79,142,247,.15);color:var(--accent)">
+        <i class="bi bi-table"></i>
+      </div>
+      <div>
+        <div class="stat-val">{{ tables|length if tables else 6 }}</div>
+        <div class="stat-lbl">Database Tables</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="stat-card">
+      <div class="stat-icon" style="background:rgba(45,206,137,.15);color:var(--success)">
+        <i class="bi bi-diagram-3-fill"></i>
+      </div>
+      <div>
+        <div class="stat-val">JOIN</div>
+        <div class="stat-lbl">Issue + Project + User</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="stat-card">
+      <div class="stat-icon" style="background:rgba(124,92,252,.15);color:var(--accent2)">
+        <i class="bi bi-lightning-charge-fill"></i>
+      </div>
+      <div>
+        <div class="stat-val">Triggers</div>
+        <div class="stat-lbl">Automated Logs</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card mb-4">
+  <div class="card-header">
+    <i class="bi bi-pencil-square" style="color:var(--accent)"></i> Test MySQL Status History Trigger
+  </div>
+  <div class="card-body">
+    <form method="POST" action="{{ url_for('dbms_demo_update_status') }}" class="row g-3 align-items-end">
+      <div class="col-md-6">
+        <label class="form-label">Select Issue</label>
+        <select name="issue_id" class="form-select" required>
+          <option value="">-- Choose an Issue --</option>
+          {% for issue in issue_options %}
+          <option value="{{ issue.issue_id }}">#{{ issue.issue_id }} - {{ issue.title }} (Current: {{ issue.status }})</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">New Status</label>
+        <select name="status" class="form-select" required>
+          <option value="open">Open</option>
+          <option value="in_progress">In Progress</option>
+          <option value="resolved">Resolved</option>
+          <option value="closed">Closed</option>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <button type="submit" class="btn btn-primary w-100">Update Status</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="card mb-4">
+  <div class="card-header">
+    <i class="bi bi-lightning-charge-fill" style="color:var(--danger)"></i> Trigger Result: Status History Log
+  </div>
+  <div class="card-body">
+    <p style="color:var(--muted)">
+      Newest rows appear at the top. After using the update form above, the MySQL trigger logs the change automatically.
+    </p>
+    <div class="table-responsive">
+      <table class="table table-sm">
+        <thead>
+          <tr>
+            <th>History ID</th>
+            <th>Issue</th>
+            <th>Old Status</th>
+            <th>New Status</th>
+            <th>Changed By</th>
+            <th>Changed At</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for h in trigger_rows %}
+          <tr>
+            <td>#{{ h.history_id }}</td>
+            <td>#{{ h.issue_id }} — {{ h.title }}</td>
+            <td>
+              {% if h.old_status %}
+              <span class="badge badge-status-{{ h.old_status }}">
+                {{ h.old_status.replace('_',' ') }}
+              </span>
+              {% else %}
+              -
+              {% endif %}
+            </td>
+            <td>
+              <span class="badge badge-status-{{ h.new_status }}">
+                {{ h.new_status.replace('_',' ') }}
+              </span>
+            </td>
+            <td>{{ h.changed_by }}</td>
+            <td>{{ h.changed_at }}</td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="6" class="text-center text-muted py-3">No status history logs found. Try changing an issue's status.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

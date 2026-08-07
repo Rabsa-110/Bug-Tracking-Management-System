@@ -1,0 +1,275 @@
+{% extends 'base.html' %}
+{% block title %}DBMS Features{% endblock %}
+{% block page_title %}DBMS Features{% endblock %}
+{% block breadcrumb %}<li>DBMS Features</li>{% endblock %}
+
+{% block content %}
+
+<!-- Header explanation -->
+<div class="card mb-4" style="background:linear-gradient(135deg,rgba(79,142,247,.08),rgba(124,92,252,.08));border-color:rgba(79,142,247,.25)">
+  <div class="card-body" style="padding:24px">
+    <h4 style="color:var(--text);font-size:18px;font-weight:700;margin-bottom:8px">
+      <i class="bi bi-database-fill-gear" style="color:var(--accent2)"></i>
+      DBMS Implementation Showcase
+    </h4>
+    <p style="color:var(--muted);font-size:13.5px;line-height:1.7;margin:0">
+      This page demonstrates all the DBMS features implemented in this project — running <strong style="color:var(--text)">live against the database</strong>.
+      All data shown below is fetched using <strong style="color:var(--accent)">VIEWs</strong>, <strong style="color:var(--accent)">stored FUNCTIONs</strong>,
+      <strong style="color:var(--accent)">multi-table JOINs</strong>, and records created automatically by <strong style="color:var(--accent)">TRIGGERs</strong>.
+    </p>
+  </div>
+</div>
+
+<!-- ══ FEATURE BADGES ══ -->
+<div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:28px">
+  {% set features = [
+    ('bi-table','VIEW','v_issue_summary, v_project_stats, v_user_activity','var(--accent)'),
+    ('bi-code-slash','FUNCTION','fn_count_open_issues, fn_issue_priority_score','var(--accent2)'),
+    ('bi-lightning-charge-fill','TRIGGER','trg_after_issue_status_update, trg_before_user_insert','var(--warning)'),
+    ('bi-diagram-3-fill','JOIN','5-table JOIN across Issue, Project, User, Comment, Attachment','var(--success)'),
+    ('bi-shield-check-fill','CONSTRAINTS','PK, FK, UNIQUE, NOT NULL, CHECK, DEFAULT on all tables','var(--info)'),
+    ('bi-search','SEARCH/UPDATE','Full text search + status/priority update operations','#ff6b8a'),
+  ] %}
+  {% for icon, label, desc, color in features %}
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;
+              padding:14px 18px;display:flex;align-items:flex-start;gap:12px;
+              min-width:260px;flex:1;max-width:360px">
+    <div style="width:38px;height:38px;border-radius:10px;background:rgba(79,142,247,.1);
+                display:flex;align-items:center;justify-content:center;flex-shrink:0">
+      <i class="bi {{ icon }}" style="color:{{ color }};font-size:18px"></i>
+    </div>
+    <div>
+      <div style="font-weight:700;font-size:13px;color:{{ color }}">{{ label }}</div>
+      <div style="font-size:11.5px;color:var(--muted);margin-top:2px;line-height:1.5">{{ desc }}</div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- ══ SECTION 1: VIEWs ══ -->
+<div class="card mb-4">
+  <div class="card-header">
+    <i class="bi bi-table" style="color:var(--accent)"></i>
+    VIEW Demo — <code>v_project_stats</code>
+    <span style="margin-left:8px;font-size:11px;background:rgba(79,142,247,.15);color:var(--accent);
+                 padding:2px 8px;border-radius:8px;font-weight:600">SELECT * FROM v_project_stats</span>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead><tr>
+        <th>Project</th>
+        <th>Total</th>
+        <th>Open</th>
+        <th>In Progress</th>
+        <th>Done</th>
+        <th>Critical</th>
+      </tr></thead>
+      <tbody>
+      {% for p in proj_stats %}
+      <tr>
+        <td style="font-weight:600;color:var(--text)">{{ p.project_name }}</td>
+        <td style="color:var(--muted)">{{ p.total_issues }}</td>
+        <td><span class="badge badge-status-open">{{ p.open_issues }}</span></td>
+        <td><span class="badge badge-status-in_progress">{{ p.inprog_issues }}</span></td>
+        <td><span class="badge badge-status-resolved">{{ p.done_issues }}</span></td>
+        <td>
+          {% if p.critical_count %}<span class="badge badge-prio-critical">{{ p.critical_count }}</span>
+          {% else %}<span style="color:var(--border)">—</span>{% endif %}
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="6" style="text-align:center;color:var(--muted);padding:20px">No data</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- v_user_activity VIEW -->
+<div class="card mb-4">
+  <div class="card-header">
+    <i class="bi bi-table" style="color:var(--accent)"></i>
+    VIEW Demo — <code>v_user_activity</code>
+    <span style="margin-left:8px;font-size:11px;background:rgba(79,142,247,.15);color:var(--accent);
+                 padding:2px 8px;border-radius:8px;font-weight:600">SELECT * FROM v_user_activity</span>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead><tr>
+        <th>User</th>
+        <th>Role</th>
+        <th>Open Assigned</th>
+        <th>Total Comments</th>
+        <th>Attachments</th>
+      </tr></thead>
+      <tbody>
+      {% for u in user_activity %}
+      <tr>
+        <td>
+          <div style="font-weight:600;color:var(--text)">{{ u.name }}</div>
+          <div style="font-size:11.5px;color:var(--muted)">{{ u.email }}</div>
+        </td>
+        <td><span class="role-badge role-{{ u.role }}">{{ u.role }}</span></td>
+        <td style="color:var(--text)">{{ u.open_assigned }}</td>
+        <td style="color:var(--text)">{{ u.total_comments }}</td>
+        <td style="color:var(--text)">{{ u.total_attachments }}</td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ══ SECTION 2: FUNCTIONS ══ -->
+<div class="card mb-4">
+  <div class="card-header">
+    <i class="bi bi-code-slash" style="color:var(--accent2)"></i>
+    FUNCTION Demo — <code>fn_count_open_issues(project_id)</code>
+    <span style="margin-left:8px;font-size:11px;background:rgba(124,92,252,.15);color:var(--accent2);
+                 padding:2px 8px;border-radius:8px;font-weight:600">Returns INT</span>
+  </div>
+  <div class="card-body">
+    <div style="margin-bottom:14px;padding:12px 16px;background:rgba(30,33,48,.6);border-radius:10px;
+                border:1px solid var(--border);font-family:'JetBrains Mono',monospace;font-size:12px;color:#a88cfc">
+      SELECT project_name, fn_count_open_issues(project_id) AS open_count FROM Project;
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:10px">
+      {% for r in fn_results %}
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;
+                  padding:14px 18px;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:160px">
+        <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">{{ r.project_name }}</div>
+        <div style="font-size:28px;font-weight:700;color:{% if r.open_count > 0 %}#ff6b8a{% else %}#2dce89{% endif %}">{{ r.open_count }}</div>
+        <div style="font-size:11px;color:var(--muted)">open issues</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<!-- ══ SECTION 3: TRIGGERS ══ -->
+<div class="card mb-4">
+  <div class="card-header">
+    <i class="bi bi-lightning-charge-fill" style="color:var(--warning)"></i>
+    TRIGGER Demo — <code>trg_after_issue_status_update</code>
+    <span style="margin-left:8px;font-size:11px;background:rgba(245,166,35,.15);color:var(--warning);
+                 padding:2px 8px;border-radius:8px;font-weight:600">Auto-logged history</span>
+  </div>
+  <div class="card-body">
+    <p style="font-size:13px;color:var(--muted);margin-bottom:16px">
+      Every time an issue's status is changed, the trigger <strong style="color:var(--text)">trg_after_issue_status_update</strong>
+      automatically inserts a record into the <code>Issue_Status_History</code> table.
+      The entries below were created automatically — no application code inserted them.
+    </p>
+    <div class="timeline">
+      {% for h in trigger_log %}
+      <div class="timeline-item">
+        <div class="timeline-dot"></div>
+        <div class="timeline-content">
+          <strong style="color:var(--text)">{{ h.changer_name }}</strong>
+          <span style="color:var(--muted)"> changed </span>
+          <a href="{{ url_for('issue_detail', iid=h.issue_id) }}" style="color:var(--accent);text-decoration:none">
+            #{{ h.issue_id }} {{ h.issue_title|truncate(40) }}
+          </a><br>
+          {% if h.old_status %}
+          <span class="badge badge-status-{{ h.old_status }}">{{ h.old_status.replace('_',' ') }}</span>
+          <span style="color:var(--muted)"> → </span>
+          <span class="badge badge-status-{{ h.new_status }}">{{ h.new_status.replace('_',' ') }}</span>
+          {% else %}
+          <span style="color:var(--muted)">Created as</span>
+          <span class="badge badge-status-{{ h.new_status }}">{{ h.new_status }}</span>
+          {% endif %}
+        </div>
+        <div class="timeline-time">{{ h.changed_at.strftime('%b %d, %Y at %H:%M') }}</div>
+      </div>
+      {% else %}
+      <div class="empty-state"><i class="bi bi-activity"></i><p>No history yet — change an issue's status to trigger it.</p></div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<!-- ══ SECTION 4: JOIN DEMO ══ -->
+<div class="card mb-4">
+  <div class="card-header">
+    <i class="bi bi-diagram-3-fill" style="color:var(--success)"></i>
+    JOIN Demo — 5-table JOIN
+    <span style="margin-left:8px;font-size:11px;background:rgba(45,206,137,.15);color:#2dce89;
+                 padding:2px 8px;border-radius:8px;font-weight:600">Issue + Project + User(×2) + Comment + Attachment</span>
+  </div>
+  <div class="card-body" style="padding-bottom:0">
+    <div style="margin-bottom:14px;padding:12px 16px;background:rgba(30,33,48,.6);border-radius:10px;
+                border:1px solid var(--border);font-family:'JetBrains Mono',monospace;font-size:11.5px;
+                color:#a88cfc;line-height:1.8;overflow-x:auto;white-space:pre">SELECT i.issue_id, i.title, i.status, i.priority,
+       p.project_name, r.name AS reporter, a.name AS assignee,
+       COUNT(c.comment_id) AS comments,
+       COUNT(att.attachment_id) AS attachments
+FROM Issue i
+JOIN  Project p  ON i.project_id  = p.project_id
+JOIN  User    r  ON i.reported_by = r.user_id
+LEFT JOIN User    a   ON i.assigned_to = a.user_id
+LEFT JOIN Comment c   ON i.issue_id    = c.issue_id
+LEFT JOIN Attachment att ON i.issue_id = att.issue_id
+GROUP BY i.issue_id, ...</div>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead><tr>
+        <th>#</th><th>Title</th><th>Project</th><th>Priority</th><th>Status</th>
+        <th>Reporter</th><th>Assignee</th><th>Comments</th><th>Attachments</th>
+      </tr></thead>
+      <tbody>
+      {% for i in join_demo %}
+      <tr>
+        <td><code>#{{ i.issue_id }}</code></td>
+        <td>
+          <a href="{{ url_for('issue_detail', iid=i.issue_id) }}" style="font-weight:500;color:var(--text)">
+            {{ i.title|truncate(38) }}
+          </a>
+        </td>
+        <td style="font-size:12px;color:var(--muted)">{{ i.project_name }}</td>
+        <td><span class="badge badge-prio-{{ i.priority }}">{{ i.priority }}</span></td>
+        <td><span class="badge badge-status-{{ i.status }}">{{ i.status.replace('_',' ') }}</span></td>
+        <td style="font-size:12px;color:var(--muted)">{{ i.reporter }}</td>
+        <td style="font-size:12px;color:var(--muted)">{{ i.assignee or '—' }}</td>
+        <td style="text-align:center;color:var(--text)">{{ i.comments }}</td>
+        <td style="text-align:center;color:var(--text)">{{ i.attachments }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="9" style="text-align:center;color:var(--muted);padding:24px">No issues found</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ══ SECTION 5: CONSTRAINTS REFERENCE ══ -->
+<div class="card mb-4">
+  <div class="card-header">
+    <i class="bi bi-shield-check-fill" style="color:var(--info)"></i>
+    Constraints Applied in All Tables
+  </div>
+  <div class="card-body">
+    <div class="row g-3">
+      {% set constraints = [
+        ('Project','PK: project_id | UNIQUE: project_name | CHECK: name length ≥ 3'),
+        ('User','PK: user_id | UNIQUE: email | CHECK: email format, name length ≥ 2 | DEFAULT: role = developer'),
+        ('Issue','PK: issue_id | FK: project_id, reported_by, assigned_to | CHECK: title length ≥ 5 | DEFAULT: status=open, priority=medium'),
+        ('Comment','PK: comment_id | FK: issue_id, user_id | NOT NULL: comment_text'),
+        ('Attachment','PK: attachment_id | FK: issue_id, user_id | NOT NULL: file_name, file_path'),
+        ('Issue_Status_History','PK: history_id | FK: issue_id, changed_by | CHECK: old_status ≠ new_status | NOT NULL: new_status'),
+      ] %}
+      {% for table, desc in constraints %}
+      <div class="col-md-6">
+        <div style="background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:10px;padding:14px">
+          <div style="font-weight:700;font-size:13px;color:var(--accent);margin-bottom:6px">
+            <i class="bi bi-table" style="margin-right:6px"></i>{{ table }}
+          </div>
+          <div style="font-size:12.5px;color:var(--muted);line-height:1.8">{{ desc }}</div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+{% endblock %}
